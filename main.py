@@ -3,9 +3,7 @@ from PIL import Image
 from io import BytesIO
 import torch
 from torchvision import transforms
-import pickle
 from models.net import Net
-from pydantic import BaseModel
 
 import supervision as sv
 from inference_sdk import InferenceHTTPClient
