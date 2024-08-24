@@ -26,7 +26,7 @@ transform = transforms.Compose([
 net = Net().cpu().eval()
 
 # 重みの読み込み(cpuでの読込)
-net.load_state_dict(torch.load('models/catClassify.pt', map_location=torch.device('cpu')))
+net.load_state_dict(torch.load('models/catClassify.pt', map_location=torch.device('cpu'),weights_only=True))
 
 #推論用の関数
 def predictImage(model,image):
