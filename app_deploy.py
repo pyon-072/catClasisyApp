@@ -20,6 +20,10 @@ little_smailing = image.open('images/猫笑顔イラスト_小笑い.jpg')
 big_smailing = image.open('images/猫笑顔イラスト_大笑い.jpg')
 ng_catFace = image.open('images/猫NGイラスト.jpg')
 
+#fastAPIアクセス用のURL
+detect_catFace_url = "https://catclasify-api-f6t7j7z7cq-an.a.run.app/detect_catFace"
+upload_image_url = "https://catclasify-api-f6t7j7z7cq-an.a.run.app/upload-image"
+
 # モデルの予測結果によって表示内容を変更する
 def custom(num):
     if num == 3:
@@ -131,19 +135,40 @@ if uploaded_file is not None and st.session_state.is_uploaded == False:
     #アップロード状態をTrueに設定 ←　本処理は画像ファイルを再アップロードした時のみ処理が実行されるようにする為
     st.session_state.is_uploaded = True
 
+    # プログレスバーと進行中のメッセージを表示
+    progress_bar = st.progress(0)
+    status_text = st.empty()  # 進行中メッセージ用の空コンテナ
+    status_text.write("進行中...")  # メッセージ表示
+
     #---------------------------------------------------------------------------------
     #① FastAPIへの画像データの受渡と猫の顔のboundingboxの座標の取得
     files = {"file" : uploaded_file.getvalue()}
     try:
-        response = requests.post("https://catclasisyapp.onrender.com/detect_catFace", files=files)
+        progress_bar.progress(60)  # プログレスバーを更新
+
+        response = requests.post(detect_catFace_url, files=files)
         response.raise_for_status()  # HTTPステータスコードが4xx/5xxのとき例外を発生させる
+        progress_bar.progress(80)  # プログレスバーを更新
+
         detection_result = response.json()["detection"]
     except requests.exceptions.Timeout:
         st.error("The request timed out")
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
     except requests.exceptions.HTTPError as err:
         st.error(f"HTTP error occurred: {err}")  # HTTPエラーが発生した場合の処理
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
     except requests.exceptions.RequestException as err:
         st.error(f"An error occurred: {err}")
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
+    else:
+        progress_bar.progress(100)  # プログレスバーを100%に更新
+        status_text.empty()  # 進行中メッセージを削除
+    
+    # プログレスバーを削除
+    progress_bar.empty()
 
     #--------------------------------------------------------------------------------
     #② 戻り値の座標をもとに猫の顔を切り取って表示する
@@ -172,23 +197,40 @@ if st.session_state.is_started:
     cont1.write('この画像で評価しますか？')
     cont1.image(st.session_state.cropped_file,use_column_width = True)
 
+     # プログレスバーと進行中のメッセージを表示
+    progress_bar = st.progress(0)
+    status_text = st.empty()  # 進行中メッセージ用の空コンテナ
+    status_text.write("進行中...")  # メッセージ表示
+
     #---------------------------------------------------------------------------------
     #① FastAPIへの画像データの受渡と予測結果の取得
     files = {"file" : st.session_state.cropped_file.getvalue()}
     try:
-        response = requests.post("https://catclasisyapp.onrender.com/upload-image", files=files)
+        progress_bar.progress(60)  # プログレスバーを更新
+
+        response = requests.post(upload_image_url, files=files)
         response.raise_for_status()  # HTTPステータスコードが4xx/5xxのとき例外を発生させる
+        progress_bar.progress(80)  # プログレスバーを更新
+
         prediction_result = response.json()["prediction"]
     except requests.exceptions.Timeout:
         st.error("The request timed out")
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
     except requests.exceptions.HTTPError as err:
         st.error(f"HTTP error occurred: {err}")  # HTTPエラーが発生した場合の処理
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
     except requests.exceptions.RequestException as err:
         st.error(f"An error occurred: {err}")
+        progress_bar.progress(0)
+        status_text.empty()  # 進行中メッセージを削除
     finally:
         # 各種ステータスはエラーになった時含めて必ずリセット
         st.session_state.is_uploaded = False
         st.session_state.is_started = False
+        status_text.empty()  # 進行中メッセージを削除
+        progress_bar.empty() # プログレスバーを削除
 
    #---------------------------------------------------------------------------------
    #② FastAPIからの予測結果を画面表示用に編集
