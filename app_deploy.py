@@ -117,7 +117,7 @@ uploaded_file = st.sidebar.file_uploader('猫画像アップロード',type='jpg
 
 # ②メインページの設定
 
-st.title('Is your cat smailing ??')
+st.title('Is your cat smiling ??')
 st.header('猫の顔画像をアップロードすることでどれくらい笑顔なのかを評価できます！')
 
 
